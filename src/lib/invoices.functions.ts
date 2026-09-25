@@ -213,6 +213,8 @@ export const pushInvoiceToOdoo = createServerFn({ method: "POST" })
       // --- Bon de commande (module Achats) ---
       let purchaseId: number | null = null;
       let purchaseName: string | null = null;
+      let poLineIds: number[] = [];
+      const warnings: string[] = [];
       if (data.createPurchaseOrder && productId) {
         // Odoo ≤16 : taxes_id ; Odoo 17+ : tax_ids
         const polFields = await client.call<Record<string, unknown>>("purchase.order.line", "fields_get", [["taxes_id", "tax_ids"]], { attributes: ["type"] });
@@ -230,8 +232,12 @@ export const pushInvoiceToOdoo = createServerFn({ method: "POST" })
             ...(polTaxField ? { [polTaxField]: [[6, 0, l.tax_rate && taxByRate.has(l.tax_rate) ? [taxByRate.get(l.tax_rate)] : []]] } : {}),
           }]),
         });
-        const po = await client.call<{ name: string }[]>("purchase.order", "read", [[purchaseId]], { fields: ["name"] });
+        // Confirmer la demande de prix -> bon de commande
+        try { await client.call("purchase.order", "button_confirm", [[purchaseId]]); }
+        catch (e) { warnings.push(`Bon de commande non confirmé : ${(e as Error).message}`); }
+        const po = await client.call<{ name: string; order_line: number[] }[]>("purchase.order", "read", [[purchaseId]], { fields: ["name", "order_line"] });
         purchaseName = po[0]?.name ?? null;
+        poLineIds = po[0]?.order_line ?? [];
       }
 
       // --- Facture fournisseur (module Facturation) ---
@@ -245,8 +251,9 @@ export const pushInvoiceToOdoo = createServerFn({ method: "POST" })
         ...(currencyId ? { currency_id: currencyId } : {}),
         ...(purchaseName ? { invoice_origin: purchaseName } : {}),
         ...(extracted.notes ? { narration: extracted.notes } : {}),
-        invoice_line_ids: lines.map((l) => [0, 0, {
+        invoice_line_ids: lines.map((l, i) => [0, 0, {
           ...(productId ? { product_id: productId } : {}),
+          ...(poLineIds[i] ? { purchase_line_id: poLineIds[i] } : {}),
           name: l.description,
           quantity: l.quantity || 1,
           price_unit: l.unit_price,
@@ -258,14 +265,19 @@ export const pushInvoiceToOdoo = createServerFn({ method: "POST" })
       // --- PDF d'origine en pièce jointe ---
       if (data.attachPdf) {
         try {
-          const { data: file } = await supabase.storage.from("invoices").download(inv.storage_path);
-          if (file) {
-            const bytes = new Uint8Array(await file.arrayBuffer());
-            let bin = "";
-            for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-            await client.create("ir.attachment", { name: inv.file_name, res_model: "account.move", res_id: moveId, mimetype: "application/pdf", datas: btoa(bin) });
+          const { data: file, error: dlErr } = await supabase.storage.from("invoices").download(inv.storage_path);
+          if (dlErr || !file) throw new Error(dlErr?.message ?? "fichier introuvable");
+          const bytes = new Uint8Array(await file.arrayBuffer());
+          let bin = "";
+          for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+          const b64 = btoa(bin);
+          const attId = await client.create("ir.attachment", { name: inv.file_name, type: "binary", res_model: "account.move", res_id: moveId, mimetype: "application/pdf", datas: b64 });
+          try { await client.call("account.move", "message_post", [[moveId]], { body: "Facture d'origine (scannée)", attachment_ids: [attId] }); } catch { /* chatter optionnel */ }
+          try { await client.call("account.move", "write", [[moveId], { message_main_attachment_id: attId }]); } catch { /* champ optionnel */ }
+          if (purchaseId) {
+            try { await client.create("ir.attachment", { name: inv.file_name, type: "binary", res_model: "purchase.order", res_id: purchaseId, mimetype: "application/pdf", datas: b64 }); } catch { /* optionnel */ }
           }
-        } catch { /* la pièce jointe est optionnelle */ }
+        } catch (e) { warnings.push(`PDF non joint : ${(e as Error).message}`); }
       }
 
       await supabase.from("invoices").update({
