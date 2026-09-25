@@ -214,6 +214,9 @@ export const pushInvoiceToOdoo = createServerFn({ method: "POST" })
       let purchaseId: number | null = null;
       let purchaseName: string | null = null;
       if (data.createPurchaseOrder && productId) {
+        // Odoo ≤16 : taxes_id ; Odoo 17+ : tax_ids
+        const polFields = await client.call<Record<string, unknown>>("purchase.order.line", "fields_get", [["taxes_id", "tax_ids"]], { attributes: ["type"] });
+        const polTaxField = "tax_ids" in polFields ? "tax_ids" : "taxes_id" in polFields ? "taxes_id" : null;
         purchaseId = await client.create("purchase.order", {
           partner_id: partnerId,
           ...(extracted.invoice_number ? { partner_ref: extracted.invoice_number } : {}),
@@ -224,7 +227,7 @@ export const pushInvoiceToOdoo = createServerFn({ method: "POST" })
             name: l.description,
             product_qty: l.quantity || 1,
             price_unit: l.unit_price,
-            ...(l.tax_rate && taxByRate.has(l.tax_rate) ? { taxes_id: [[6, 0, [taxByRate.get(l.tax_rate)]]] } : { taxes_id: [[6, 0, []]] }),
+            ...(polTaxField ? { [polTaxField]: [[6, 0, l.tax_rate && taxByRate.has(l.tax_rate) ? [taxByRate.get(l.tax_rate)] : []]] } : {}),
           }]),
         });
         const po = await client.call<{ name: string }[]>("purchase.order", "read", [[purchaseId]], { fields: ["name"] });
