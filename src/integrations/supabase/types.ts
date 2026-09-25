@@ -14,7 +14,111 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      invoices: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          extracted: Json | null
+          file_name: string
+          id: string
+          odoo_move_id: number | null
+          odoo_move_name: string | null
+          odoo_partner_created: boolean
+          odoo_partner_id: number | null
+          odoo_purchase_id: number | null
+          odoo_purchase_name: string | null
+          status: string
+          storage_path: string
+          supplier_match: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          extracted?: Json | null
+          file_name: string
+          id?: string
+          odoo_move_id?: number | null
+          odoo_move_name?: string | null
+          odoo_partner_created?: boolean
+          odoo_partner_id?: number | null
+          odoo_purchase_id?: number | null
+          odoo_purchase_name?: string | null
+          status?: string
+          storage_path?: string
+          supplier_match?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          extracted?: Json | null
+          file_name?: string
+          id?: string
+          odoo_move_id?: number | null
+          odoo_move_name?: string | null
+          odoo_partner_created?: boolean
+          odoo_partner_id?: number | null
+          odoo_purchase_id?: number | null
+          odoo_purchase_name?: string | null
+          status?: string
+          storage_path?: string
+          supplier_match?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      odoo_connections: {
+        Row: {
+          api_key_enc: string
+          company_name: string | null
+          created_at: string
+          db_name: string
+          id: string
+          last_checked_at: string | null
+          modules: Json
+          odoo_uid: number | null
+          odoo_version: string | null
+          updated_at: string
+          url: string
+          user_id: string
+          username: string
+        }
+        Insert: {
+          api_key_enc: string
+          company_name?: string | null
+          created_at?: string
+          db_name: string
+          id?: string
+          last_checked_at?: string | null
+          modules?: Json
+          odoo_uid?: number | null
+          odoo_version?: string | null
+          updated_at?: string
+          url: string
+          user_id: string
+          username: string
+        }
+        Update: {
+          api_key_enc?: string
+          company_name?: string | null
+          created_at?: string
+          db_name?: string
+          id?: string
+          last_checked_at?: string | null
+          modules?: Json
+          odoo_uid?: number | null
+          odoo_version?: string | null
+          updated_at?: string
+          url?: string
+          user_id?: string
+          username?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
