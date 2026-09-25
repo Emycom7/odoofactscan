@@ -282,6 +282,7 @@ export const pushInvoiceToOdoo = createServerFn({ method: "POST" })
 
       await supabase.from("invoices").update({
         status: "created",
+        error_message: warnings.length ? warnings.join(" · ") : null,
         extracted: extracted as unknown as Json,
         odoo_partner_id: partnerId,
         odoo_partner_created: partnerCreated,
