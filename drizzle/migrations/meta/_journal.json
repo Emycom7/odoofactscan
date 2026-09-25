@@ -8,6 +8,13 @@
       "when": 1790343892995,
       "tag": "0000_create_odoo_connections_and_invoices",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790343918245,
+      "tag": "0001_invoices_bucket_policies",
+      "breakpoints": true
     }
   ]
 }
