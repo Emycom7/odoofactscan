@@ -1,5 +1,13 @@
 {
   "version": "7",
   "dialect": "postgresql",
-  "entries": []
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1790343892995,
+      "tag": "0000_create_odoo_connections_and_invoices",
+      "breakpoints": true
+    }
+  ]
 }
