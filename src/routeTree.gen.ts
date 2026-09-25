@@ -10,33 +10,109 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppRouteImport } from './routes/app'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AppIndexRouteImport } from './routes/app/index'
+import { Route as AppConnexionRouteImport } from './routes/app/connexion'
+import { Route as AppFacturesIndexRouteImport } from './routes/app/factures/index'
+import { Route as AppFacturesIdRouteImport } from './routes/app/factures/$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppRoute = AppRouteImport.update({
+  id: '/app',
+  path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppIndexRoute = AppIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppConnexionRoute = AppConnexionRouteImport.update({
+  id: '/connexion',
+  path: '/connexion',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppFacturesIndexRoute = AppFacturesIndexRouteImport.update({
+  id: '/factures/',
+  path: '/factures/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppFacturesIdRoute = AppFacturesIdRouteImport.update({
+  id: '/factures/$id',
+  path: '/factures/$id',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/app': typeof AppRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/app/connexion': typeof AppConnexionRoute
+  '/app/': typeof AppIndexRoute
+  '/app/factures/$id': typeof AppFacturesIdRoute
+  '/app/factures/': typeof AppFacturesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/app/connexion': typeof AppConnexionRoute
+  '/app': typeof AppIndexRoute
+  '/app/factures/$id': typeof AppFacturesIdRoute
+  '/app/factures': typeof AppFacturesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/app': typeof AppRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/app/connexion': typeof AppConnexionRoute
+  '/app/': typeof AppIndexRoute
+  '/app/factures/$id': typeof AppFacturesIdRoute
+  '/app/factures/': typeof AppFacturesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/app'
+    | '/auth'
+    | '/app/connexion'
+    | '/app/'
+    | '/app/factures/$id'
+    | '/app/factures/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/app/connexion'
+    | '/app'
+    | '/app/factures/$id'
+    | '/app/factures'
+  id:
+    | '__root__'
+    | '/'
+    | '/app'
+    | '/auth'
+    | '/app/connexion'
+    | '/app/'
+    | '/app/factures/$id'
+    | '/app/factures/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRouteWithChildren
+  AuthRoute: typeof AuthRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +124,71 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app/': {
+      id: '/app/'
+      path: '/'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/connexion': {
+      id: '/app/connexion'
+      path: '/connexion'
+      fullPath: '/app/connexion'
+      preLoaderRoute: typeof AppConnexionRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/factures/': {
+      id: '/app/factures/'
+      path: '/factures'
+      fullPath: '/app/factures/'
+      preLoaderRoute: typeof AppFacturesIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/factures/$id': {
+      id: '/app/factures/$id'
+      path: '/factures/$id'
+      fullPath: '/app/factures/$id'
+      preLoaderRoute: typeof AppFacturesIdRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
+interface AppRouteChildren {
+  AppConnexionRoute: typeof AppConnexionRoute
+  AppIndexRoute: typeof AppIndexRoute
+  AppFacturesIdRoute: typeof AppFacturesIdRoute
+  AppFacturesIndexRoute: typeof AppFacturesIndexRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppConnexionRoute: AppConnexionRoute,
+  AppIndexRoute: AppIndexRoute,
+  AppFacturesIdRoute: AppFacturesIdRoute,
+  AppFacturesIndexRoute: AppFacturesIndexRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AppRoute: AppRouteWithChildren,
+  AuthRoute: AuthRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
